@@ -1,0 +1,7 @@
+{
+  "retrievedAt": "2026-10-02",
+  "population": {"value":36705,"year":2023,"commune":"92020","url":"https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020","geographyDate":"2026-01-01"},
+  "households": {"value":17646,"year":2023,"url":"https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020"},
+  "dogOwnership": {"value":22,"unit":"percent of surveyed dog owners / possession respondents in Paris agglomeration, as described by FACCO","period":"2025-2026","url":"https://www.facco.fr/chiffres-cles/les-chiffres-de-la-population-animale-2/","quote":"un taux de possession qui chute à 25% dans les grandes villes et même 22% dans l’agglomération parisienne","modelTransfer":"Applied to local households as an explicit proxy; not a measured Châtillon household rate"},
+  "behavior": {"status":"assumptions","walksPerDay":3,"durationMinutes":25,"weekdayPeaks":[7.5,12.5,18.5],"pauseProbabilityPerEligibleEntrance":0.18,"pauseDurationSeconds":[15,45],"notes":"No verified local temporal survey or door urination rate. Stops are hypothetical."}
+}
