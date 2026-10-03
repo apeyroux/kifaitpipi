@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
+  <title id="title">kifaitpipi</title>
+  <desc id="desc">Comprendre les promenades, explorer les hypothèses. Illustration abstraite de parcours lumineux.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1"><stop stop-color="#09141f"/><stop offset="1" stop-color="#132635"/></linearGradient>
+    <radialGradient id="light"><stop stop-color="#76efd0" stop-opacity=".15"/><stop offset="1" stop-color="#76efd0" stop-opacity="0"/></radialGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" fill="none" stroke="#76efd0" stroke-opacity=".05"/></pattern>
+    <clipPath id="frame"><rect width="1200" height="300" rx="20"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+  <rect width="1200" height="300" rx="20" fill="url(#background)"/>
+  <rect width="1200" height="300" rx="20" fill="url(#grid)"/>
+  <circle cx="970" cy="160" r="290" fill="url(#light)"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <g stroke="#334c5f" stroke-width="1.5" opacity=".6">
+      <path d="M755 30L795 85L850 73L900 122L967 111L1050 150L1160 132M730 165L812 140L870 168L940 154L1012 215L1130 237M800 265L830 220L870 168L850 73M920 28L900 122L940 154L937 274M1090 32L1040 82L1050 150L1012 215L1050 280"/>
+    </g>
+    <path d="M795 85L850 73L900 122L967 111L1050 150L1012 215L940 154L870 168L812 140L795 85" stroke="#76efd0" stroke-width="8" opacity=".3" filter="url(#glow)"/>
+    <path d="M812 140L870 168L830 220L937 274L1012 215L1130 237" stroke="#ab98ff" stroke-width="8" opacity=".35" filter="url(#glow)"/>
+    <path d="M795 85L850 73L900 122L967 111L1050 150L1012 215L940 154L870 168L812 140L795 85" stroke="#76efd0" stroke-width="2.5"/>
+    <path d="M812 140L870 168L830 220L937 274L1012 215L1130 237" stroke="#ab98ff" stroke-width="2.5"/>
+    <path d="M1090 32L1040 82L1050 150L1160 132" stroke="#66cbff" stroke-width="2.5"/>
+  </g>
+  <g fill="#e8f5a5"><circle cx="900" cy="122" r="5"/><circle cx="1050" cy="150" r="5"/><circle cx="830" cy="220" r="4"/></g>
+  <circle cx="1012" cy="215" r="5" fill="#dcb69d"/>
+  <g fill="#76efd0" transform="translate(56 49)">
+    <ellipse cx="14" cy="31" rx="13" ry="11" transform="rotate(-22 14 31)"/>
+    <ellipse cx="0" cy="13" rx="5" ry="7" transform="rotate(-27 0 13)"/>
+    <ellipse cx="12" cy="4" rx="5" ry="7" transform="rotate(-7 12 4)"/>
+    <ellipse cx="26" cy="7" rx="5" ry="7" transform="rotate(18 26 7)"/>
+    <ellipse cx="35" cy="20" rx="5" ry="7" transform="rotate(35 35 20)"/>
+  </g>
+  <g font-family="system-ui, -apple-system, sans-serif">
+    <text x="105" y="89" fill="#edf4fc" font-size="44" font-weight="750" letter-spacing="-1.5">kifaitpipi</text>
+    <text x="54" y="148" fill="#edf4fc" font-size="27" font-weight="600">Comprendre les promenades,</text>
+    <text x="54" y="183" fill="#76efd0" font-size="27" font-weight="600">explorer les hypothèses.</text>
+    <text x="54" y="235" fill="#a6bdcf" font-size="15">Données ouvertes · Modèle reproductible · Châtillon, 92</text>
+    <text x="1160" y="281" fill="#6e899d" font-size="10" text-anchor="end">Parcours illustratifs</text>
+  </g>
+  </g>
+</svg>
