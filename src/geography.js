@@ -28,16 +28,46 @@ export function insideCommune(p,geometry){
  const inRing=ring=>{let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const a=ring[i],b=ring[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;};
  return polygons.some(rings=>inRing(rings[0])&&!rings.slice(1).some(inRing));
 }
+// Cemetery boundaries are excluded from the dog-walking network.
+export function cemeteryAreas(osm){
+ const nodes=new Map(osm.elements.filter(e=>e.type==='node').map(e=>[e.id,e]));
+ const ways=new Map(osm.elements.filter(e=>e.type==='way').map(e=>[e.id,e]));
+ const tagged=e=>e.tags?.landuse==='cemetery'||e.tags?.amenity==='grave_yard';
+ const ring=ids=>ids.map(id=>nodes.get(id)).filter(Boolean).map(n=>[n.lon,n.lat]);
+ const areas=[];
+ for(const w of ways.values())if(tagged(w)&&w.nodes.length>=4&&w.nodes[0]===w.nodes.at(-1))areas.push({type:'Polygon',coordinates:[ring(w.nodes)]});
+ for(const r of osm.elements.filter(e=>e.type==='relation'&&tagged(e))){
+  const stitch=role=>{const parts=(r.members||[]).filter(m=>m.type==='way'&&(m.role||'outer')===role).map(m=>ways.get(m.ref)?.nodes.slice()).filter(Boolean),rings=[];
+   while(parts.length){const ids=parts.pop();while(ids[0]!==ids.at(-1)){const i=parts.findIndex(p=>p[0]===ids.at(-1)||p.at(-1)===ids.at(-1));if(i<0)break;const p=parts.splice(i,1)[0];if(p.at(-1)===ids.at(-1))p.reverse();ids.push(...p.slice(1));}if(ids.length>=4&&ids[0]===ids.at(-1))rings.push(ring(ids));}return rings;};
+  const holes=stitch('inner');for(const outer of stitch('outer'))areas.push({type:'Polygon',coordinates:[outer,...holes.filter(h=>insideCommune(h[0],{type:'Polygon',coordinates:[outer]}))]});
+ }
+ return areas;
+}
+export function crossesCemetery(a,b,areas){
+ const cross=(p,q,r)=>(q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0]);
+ const intersects=(c,d)=>Math.max(Math.min(a[0],b[0]),Math.min(c[0],d[0]))<=Math.min(Math.max(a[0],b[0]),Math.max(c[0],d[0]))&&Math.max(Math.min(a[1],b[1]),Math.min(c[1],d[1]))<=Math.min(Math.max(a[1],b[1]),Math.max(c[1],d[1]))&&cross(a,b,c)*cross(a,b,d)<=0&&cross(c,d,a)*cross(c,d,b)<=0;
+ return areas.some(area=>insideCommune(a,area)||insideCommune(b,area)||area.coordinates.some(ring=>ring.some((p,i)=>intersects(p,ring[(i+1)%ring.length]))));
+}
+// A specific pedestrian permission takes precedence over general vehicle/access
+// restrictions. Dog prohibitions still apply to a dog-walking simulation.
+function allowsDogWalking(tags){
+ const restricted=new Set(['no','private','customers','permit','delivery','agricultural','forestry','destination']);
+ const publicFoot=new Set(['yes','designated','permissive']);
+ if(!tags.highway||tags.dog==='no'||restricted.has(tags.foot))return false;
+ if(['motorway','motorway_link','trunk','trunk_link','construction','proposed'].includes(tags.highway))return false;
+ return !restricted.has(tags.access)||publicFoot.has(tags.foot);
+}
 export function parseOSM(osm,commune){
  if(!osm?.elements?.length)throw new Error('Aucune donnée OpenStreetMap reçue.');
+ const cemeteries=cemeteryAreas(osm);
  const rawNodes=new Map(osm.elements.filter(e=>e.type==='node').map(e=>[e.id,e]));const nodes=[],index=new Map(),edges=[],buildings=[],parks=[];
  const get=id=>{if(index.has(id))return index.get(id);const r=rawNodes.get(id);if(!r)return null;const i=nodes.length;index.set(id,i);nodes.push({p:project([r.lon,r.lat]),adj:[],weight:.05,name:'Voie piétonne'});return i;};
  for(const w of osm.elements){if(w.type!=='way')continue;const t=w.tags||{};
-  if(t.highway&&!['motorway','motorway_link','trunk','trunk_link','construction','proposed'].includes(t.highway)&&t.access!=='private'&&t.foot!=='no'){
-   for(let j=1;j<w.nodes.length;j++){const a=get(w.nodes[j-1]),b=get(w.nodes[j]);if(a===null||b===null||a===b)continue;if(!insideCommune(unproject([(nodes[a].p[0]+nodes[b].p[0])/2,(nodes[a].p[1]+nodes[b].p[1])/2]),commune.geometry))continue;const len=distance(nodes[a].p,nodes[b].p);nodes[a].adj.push({to:b,len});nodes[b].adj.push({to:a,len});nodes[a].name=nodes[b].name=t.name||'Voie piétonne';edges.push({a,b,main:['primary','secondary','tertiary'].includes(t.highway),name:t.name||'Voie piétonne'});}
+  if(allowsDogWalking(t)){
+   for(let j=1;j<w.nodes.length;j++){const a=get(w.nodes[j-1]),b=get(w.nodes[j]);if(a===null||b===null||a===b)continue;if(!insideCommune(unproject([(nodes[a].p[0]+nodes[b].p[0])/2,(nodes[a].p[1]+nodes[b].p[1])/2]),commune.geometry))continue;if(crossesCemetery(unproject(nodes[a].p),unproject(nodes[b].p),cemeteries))continue;const len=distance(nodes[a].p,nodes[b].p);nodes[a].adj.push({to:b,len});nodes[b].adj.push({to:a,len});nodes[a].name=nodes[b].name=t.name||'Voie piétonne';edges.push({a,b,main:['primary','secondary','tertiary'].includes(t.highway),name:t.name||'Voie piétonne'});}
   }else if(t.building||t.leisure==='park'||t.landuse==='grass'||t.landuse==='forest'){
    const poly=w.nodes.map(id=>rawNodes.get(id)).filter(Boolean).map(r=>project([r.lon,r.lat]));if(poly.length<3)continue;const center=poly.reduce((s,p)=>[s[0]+p[0]/poly.length,s[1]+p[1]/poly.length],[0,0]);if(!insideCommune(unproject(center),commune.geometry))continue;
-   if(t.building){const p=poly.reduce((s,q)=>[s[0]+q[0]/poly.length,s[1]+q[1]/poly.length],[0,0]);const residential=['yes','apartments','house','residential','detached','semidetached_house','terrace'].includes(t.building)&&!t.office&&!t.shop&&!t.amenity;buildings.push({poly,p,weight:residential?polygonArea(poly)*Math.max(1,Math.min(15,Number(t['building:levels'])|| (t.building==='apartments'?4:1))):0});}else parks.push(poly);
+   if(t.building){if(cemeteries.some(area=>insideCommune(unproject(center),area)))continue;const p=poly.reduce((s,q)=>[s[0]+q[0]/poly.length,s[1]+q[1]/poly.length],[0,0]);const residential=['yes','apartments','house','residential','detached','semidetached_house','terrace'].includes(t.building)&&!t.office&&!t.shop&&!t.amenity;buildings.push({poly,p,weight:residential?polygonArea(poly)*Math.max(1,Math.min(15,Number(t['building:levels'])|| (t.building==='apartments'?4:1))):0});}else parks.push(poly);
   }
  }
  if(nodes.length<10)throw new Error('Réseau piéton insuffisant.');
@@ -46,7 +76,7 @@ export function parseOSM(osm,commune){
  const keep=new Set(largest),remap=new Map(largest.map((old,i)=>[old,i]));const clean=largest.map(old=>({...nodes[old],adj:nodes[old].adj.filter(e=>keep.has(e.to)).map(e=>({...e,to:remap.get(e.to)}))}));
  const cleanEdges=edges.filter(e=>keep.has(e.a)&&keep.has(e.b)).map(e=>({...e,a:remap.get(e.a),b:remap.get(e.b)}));
  for(const b of buildings){b.node=nearest(clean,b.p);if(distance(clean[b.node].p,b.p)<100)clean[b.node].weight+=b.weight;}
- const doors=[];for(const r of rawNodes.values())if(r.tags?.entrance&&r.tags.entrance!=='no'&&insideCommune([r.lon,r.lat],commune.geometry)){const p=project([r.lon,r.lat]),node=nearest(clean,p);if(distance(clean[node].p,p)<35)doors.push({p,node,synthetic:false});}
+ const doors=[];for(const r of rawNodes.values())if(r.tags?.entrance&&r.tags.entrance!=='no'&&!cemeteries.some(area=>insideCommune([r.lon,r.lat],area))&&insideCommune([r.lon,r.lat],commune.geometry)){const p=project([r.lon,r.lat]),node=nearest(clean,p);if(distance(clean[node].p,p)<35)doors.push({p,node,synthetic:false});}
  if(!doors.length)for(const b of buildings.filter(b=>b.weight>0)){if(distance(clean[b.node].p,b.p)<40)doors.push({p:clean[b.node].p,node:b.node,synthetic:true});}
  return{mode:'real',nodes:clean,edges:cleanEdges,buildings,parks,doors,boundary:commune.geometry,population:commune.properties.population,source:'OpenStreetMap contributors • données publiques'};
 }
@@ -54,7 +84,7 @@ export async function fetchRealData(signal){
  const headers=typeof window==='undefined'?{'User-Agent':'KifaitpipiChatillon/1.0 urban walking research','Accept':'application/json,text/html;q=0.9,*/*;q=0.8'}:{'Accept':'application/json,text/html;q=0.9,*/*;q=0.8'};
  const g=await fetch('https://geo.api.gouv.fr/communes/92020?fields=nom,population,contour&format=geojson&geometry=contour',{signal});if(!g.ok)throw new Error('Population indisponible : HTTP '+g.status);const commune=await g.json();
  const flat=commune.geometry.coordinates.flat(commune.geometry.type==='MultiPolygon'?2:1),lons=flat.map(p=>p[0]),lats=flat.map(p=>p[1]);const box=[Math.min(...lats),Math.min(...lons),Math.max(...lats),Math.max(...lons)].join(',');
- const query=`[out:json][timeout:25][maxsize:33554432];(way["highway"](${box});way["building"](${box});way["leisure"="park"](${box});way["landuse"="grass"](${box});node["entrance"](${box}););(._;>;);out body;`;
+ const query=`[out:json][timeout:25][maxsize:33554432];(way["highway"](${box});way["building"](${box});way["leisure"="park"](${box});way["landuse"="grass"](${box});nwr["landuse"="cemetery"](${box});nwr["amenity"="grave_yard"](${box});node["entrance"](${box}););(._;>;);out body;`;
  const endpoints=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter'];let lastError;
  for(const endpoint of endpoints){try{const r=await fetch(endpoint+'?data='+encodeURIComponent(query),{signal,headers});if(!r.ok)throw new Error('OpenStreetMap : HTTP '+r.status);const osm=await r.json();if(osm.remark)throw new Error(osm.remark);return {osm,commune};}catch(e){lastError=e;if(signal?.aborted)throw e;}}
  throw lastError;

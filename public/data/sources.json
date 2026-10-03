@@ -1,7 +1,197 @@
 {
   "retrievedAt": "2026-10-02",
-  "population": {"value":36705,"year":2023,"commune":"92020","url":"https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020","geographyDate":"2026-01-01"},
-  "households": {"value":17646,"year":2023,"url":"https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020"},
-  "dogOwnership": {"value":22,"unit":"percent of surveyed dog owners / possession respondents in Paris agglomeration, as described by FACCO","period":"2025-2026","url":"https://www.facco.fr/chiffres-cles/les-chiffres-de-la-population-animale-2/","quote":"un taux de possession qui chute à 25% dans les grandes villes et même 22% dans l’agglomération parisienne","modelTransfer":"Applied to local households as an explicit proxy; not a measured Châtillon household rate"},
-  "behavior": {"status":"assumptions","walksPerDay":3,"durationMinutes":25,"weekdayPeaks":[7.5,12.5,18.5],"pauseProbabilityPerEligibleEntrance":0.18,"pauseDurationSeconds":[15,45],"notes":"No verified local temporal survey or door urination rate. Stops are hypothetical."}
+  "population": {
+    "value": 36705,
+    "year": 2023,
+    "commune": "92020",
+    "url": "https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020",
+    "geographyDate": "2026-01-01"
+  },
+  "households": {
+    "value": 17646,
+    "year": 2023,
+    "url": "https://www.insee.fr/fr/statistiques/1405599?geo=COM-92020"
+  },
+  "dogOwnership": {
+    "value": 22,
+    "unit": "percent of surveyed dog owners / possession respondents in Paris agglomeration, as described by FACCO",
+    "period": "2025-2026",
+    "url": "https://www.facco.fr/chiffres-cles/les-chiffres-de-la-population-animale-2/",
+    "quote": "un taux de possession qui chute à 25% dans les grandes villes et même 22% dans l’agglomération parisienne",
+    "modelTransfer": "Applied to local households as an explicit proxy; not a measured Châtillon household rate"
+  },
+  "behavior": {
+    "status": "assumptions",
+    "walksPerDay": 3,
+    "durationMinutes": 25,
+    "weekdayPeaks": [
+      7.5,
+      12.5,
+      18.5
+    ],
+    "pauseDurationSeconds": [
+      15,
+      45
+    ],
+    "notes": "Simulated urinary events, including marking and elimination without distinguishing them; no measured door preference.",
+    "urinationEventsPerMinute": 0.2,
+    "reference": {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7132425/",
+      "authors": "Westgarth et al.",
+      "year": 2010,
+      "table": 3,
+      "observations": 286,
+      "meanUrinationsPerMinute": 0.2,
+      "meanDefecationsPerMinute": 0.04,
+      "verifiedAt": "2026-10-03",
+      "observationDurationSeconds": {
+        "min": 10,
+        "max": 600,
+        "mean": 180,
+        "median": 136
+      },
+      "medianUrinationsPerMinute": 0,
+      "urinationRateRange": [
+        0,
+        2.5
+      ],
+      "meanUrinationsOnLeashPerMinute": 0.1,
+      "meanUrinationsOffLeashPerMinute": 0.3,
+      "defecationUse": "Historical short-observation rate, no longer linearly extrapolated to full-day defecation counts"
+    },
+    "veterinaryContext": "https://www.merckvetmanual.com/behavior/behavior-of-dogs/social-behavior-of-dogs",
+    "modelTransfer": "Urination observational mean extrapolated to walks with expected pause time accounted for; not a local calibration or clinical norm. Poisson arrivals and uniform individual factor 0.5 to 1.5 are unvalidated modeling assumptions. Illustrative pauses are not clinically measured urination durations.",
+    "defecationPauseDurationSeconds": [
+      30,
+      90
+    ],
+    "defecationNotes": "Daily per-dog Poisson count allocated among outings in proportion to actual moving duration. More or longer walks do not increase the daily expected count. Slider 0 to 4 is a scenario range, not a clinical maximum; no individual hard cap. These are events during public walks; private-garden elimination and fecal collection are not modeled. Mean, Poisson distribution and pause duration are assumptions, not locally calibrated medical norms.",
+    "additionalReferences": [
+      {
+        "authors": "McGuire et al.",
+        "year": 2020,
+        "url": "https://pubmed.ncbi.nlm.nih.gov/32272557/",
+        "dogs": 100,
+        "walkMinutes": 20,
+        "use": "Evidence of contextual variability, not a local rate calibration"
+      },
+      {
+        "authors": "McGuire et al.",
+        "year": 2023,
+        "url": "https://pubmed.ncbi.nlm.nih.gov/38067000/",
+        "studySamples": [
+          113,
+          81
+        ],
+        "walkMinutes": 20,
+        "use": "Evidence of sex, maturity and handler effects in shelter dogs; no numeric coefficients transferred"
+      },
+      {
+        "institution": "UC Davis School of Veterinary Medicine",
+        "url": "https://healthtopics.vetmed.ucdavis.edu/health-topics/canine/urine-marking-dogs",
+        "use": "Distinguish social urine marking from bladder emptying; no urine volume inferred"
+      }
+    ],
+    "durationStatus": "25 min is an adjustable target scenario setting, not a measured urban or Chatillon mean; attained average reported separately",
+    "walkingReferences": [
+      {
+        "year": 2022,
+        "title": "Associations between Neighborhood Disadvantage and Dog Walking among Participants in the Dog Aging Project",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9517596/",
+        "participants": 19732,
+        "selfReportedOnLeashMinutes": {
+          "mean": 54.3,
+          "sd": 37.5,
+          "median": 40
+        },
+        "limits": "US volunteer sample, not exclusively urban; no direct transfer to Châtillon"
+      },
+      {
+        "authors": "Christian et al.",
+        "year": 2016,
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5034524/",
+        "cities": [
+          "San Diego",
+          "Portland",
+          "Nashville",
+          "Perth"
+        ],
+        "meanWalksPerWeekRange": [
+          5,
+          6
+        ],
+        "meanMinutesPerWeekRange": [
+          93,
+          109
+        ],
+        "limits": "Weekly totals in dog walkers, not directly measured mean duration per outing"
+      },
+      {
+        "authors": "Koohsari et al.",
+        "year": 2020,
+        "url": "https://pubmed.ncbi.nlm.nih.gov/31753577/",
+        "participants": 1058,
+        "limits": "Japanese dense built environment associations, no local duration or elimination-rate calibration"
+      }
+    ],
+    "durationMinutesMeaning": "Target duration; achieved trip duration is distance / individual moving speed + sampled pauses",
+    "walkingSpeedMetersPerMinute": {
+      "distribution": "uniform",
+      "min": 50,
+      "max": 80,
+      "fixedPerDog": true,
+      "status": "unvalidated scenario assumption"
+    },
+    "minimumMinutesBetweenWalks": 30,
+    "scheduleNotes": "Minimum rest interval enforced between outings of each dog including the midnight boundary; modeling constraint, not a veterinary recommendation",
+    "routeSelection": "Closest target duration among up to six candidate connected loops; achieved mean duration and distance reported",
+    "defecationsPerDay": 2,
+    "defecationReferences": [
+      {
+        "authors": "Tanprasertsuk et al.",
+        "year": 2021,
+        "title": "Apparent total tract nutrient digestibility and metabolizable energy estimation in commercial fresh and extruded dry kibble dog foods",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC8279163/",
+        "comparisonCohortSizes": [
+          12,
+          12
+        ],
+        "defecationsPerDay": {
+          "freshChickenMean": 1.2,
+          "freshChickenSD": 0.2,
+          "kibbleMean": 1.7,
+          "kibbleSD": 0.5
+        },
+        "limits": "Small short dietary cohorts; diet-sensitive frequency, not a clinical reference interval or calibration of public-walk events in Chatillon"
+      },
+      {
+        "authors": "Cabrita et al.",
+        "year": 2023,
+        "title": "Effects of microalgae as dietary supplement on palatability, digestibility, fecal metabolites, and microbiota in healthy dogs",
+        "url": "https://www.frontiersin.org/journals/veterinary-science/articles/10.3389/fvets.2023.1245790/full",
+        "dogsPerDigestibilityTrial": 6,
+        "selectedDietMeanDefecationsPerDayRange": [
+          2.3,
+          2.5
+        ],
+        "limits": "Adult Beagle dietary trials; selected diet means, not population limits or a public-walk calibration"
+      }
+    ]
+  },
+  "excludedAreas": {
+    "cemeteryWay": 27819672,
+    "source": "https://www.openstreetmap.org/api/0.6/way/27819672/full.json",
+    "retrievedAt": "2026-10-02"
+  },
+  "dailyHeat": {
+    "cellMeters": 10,
+    "kernelRadiusMeters": 30,
+    "aggregation": "Weighted elimination events in [00:00, selected time), periodically assigned to a 24 h day",
+    "normalization": "Normalized compact kernel; color maximum fixed to complete-day maximum for selected scenario and event type, recalculated when either changes. Equal colors are not equal absolute quantities across scenarios.",
+    "urbanism": "Residential surface times levels weights departures; accessible street network constrains routes. No clinically validated park, tree, facade or paving multiplier.",
+    "meaning": "Theoretical event concentration, not measured contamination, urine volume, health risk, or abandoned feces",
+    "enabledByDefault": true
+  },
+  "observationPrecision": "5 m is a geometric query radius on simulated sampled routes, not a guarantee of positional or statistical accuracy; OSM completeness and the weighted sample limit interpretation",
+  "reproducibility": "CSV exports scenario settings and seed. Exact reproduction also requires identical geographic data and simulator version."
 }

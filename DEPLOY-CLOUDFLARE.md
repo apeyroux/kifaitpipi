@@ -31,7 +31,18 @@ Cloudflare installe les dépendances à partir de `package-lock.json`. Les comma
 
 Ajoutez toujours le domaine dans Pages avant de créer manuellement son CNAME. N’utilisez pas les IP privées du serveur cloud : elles ne servent pas à la publication.
 
-## Reconstruire l’archive
+## Publication par script
+
+Le projet existant peut être mis à jour sans importer de ZIP dans le navigateur :
+
+```sh
+npx wrangler@4.146.0 login --scopes account:read user:read pages:write
+npm run deploy:cloudflare
+```
+
+La connexion est nécessaire une seule fois. Le script reconstruit l’application, vérifie les limites Pages et publie `dist/` sur la branche de production `main` du projet `kifaitpipi`. Pour une exécution automatisée, fournissez `CLOUDFLARE_API_TOKEN` avec le droit Cloudflare Pages Edit ; ne stockez pas le jeton dans le dépôt. `CLOUDFLARE_ACCOUNT_ID` permet de remplacer le compte et `WRANGLER_CLI` de fournir le chemin d’une installation existante de Wrangler.
+
+## Reconstruire l’archive localement
 
 Dans le dossier du projet, avec Node 24 :
 
@@ -51,4 +62,4 @@ Importez ensuite le contenu de `dist/`. Les limites Cloudflare Pages (25 MiB par
 - Lancez la lecture : l’heure et les flux évoluent ; mettez en pause et changez l’heure.
 - Testez sur mobile, puis consultez les sources dans Méthodologie.
 
-Le déploiement et le domaine ne sont pas encore activés par la préparation de cette archive : ils nécessitent l’import dans votre compte Cloudflare et les réglages DNS ci-dessus.
+Le projet Cloudflare Pages `kifaitpipi` a été créé et déployé le 2 octobre 2026 par import direct de `dist/` (23 fichiers). Adresse de production : https://kifaitpipi.pages.dev. Le domaine `kifaitpipi.rue.lasegue.fr` est associé au projet ; le CNAME `kifaitpipi.rue` vers `kifaitpipi.pages.dev` a été créé dans la zone `lasegue.fr`. Cloudflare confirme le domaine Actif et SSL activé ; la réponse HTTPS de l’adresse finale a été vérifiée. La version publiée inclut le rayon de 5 m, les halos pastel et les défécations simulées.
