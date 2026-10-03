@@ -4,7 +4,7 @@ from pathlib import Path
 import webbrowser
 import argparse
 
-page_path = Path(__file__).resolve().parent.parent / 'kifaitpipi-autonome.html'
+page_path = Path(__file__).resolve().parent.parent / 'kikifaitpipi-autonome.html'
 parser = argparse.ArgumentParser()
 parser.add_argument('--port', type=int, default=0)
 args = parser.parse_args()

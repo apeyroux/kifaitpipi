@@ -10,6 +10,6 @@ function run(command,args){
 }
 run(process.execPath,['node_modules/vite/bin/vite.js','build']);
 run(process.execPath,['scripts/check-pages.mjs']);
-const deploy=['pages','deploy','dist','--project-name=kifaitpipi','--branch=main','--commit-dirty=true'];
+const deploy=['pages','deploy','dist','--project-name=kikifaitpipi','--branch=main','--commit-dirty=true'];
 if(process.env.WRANGLER_CLI)run(process.execPath,[process.env.WRANGLER_CLI,...deploy]);
 else run('npx',['--yes','wrangler@4.146.0',...deploy]);

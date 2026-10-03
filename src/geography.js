@@ -81,7 +81,7 @@ export function parseOSM(osm,commune){
  return{mode:'real',nodes:clean,edges:cleanEdges,buildings,parks,doors,boundary:commune.geometry,population:commune.properties.population,source:'OpenStreetMap contributors • données publiques'};
 }
 export async function fetchRealData(signal){
- const headers=typeof window==='undefined'?{'User-Agent':'KifaitpipiChatillon/1.0 urban walking research','Accept':'application/json,text/html;q=0.9,*/*;q=0.8'}:{'Accept':'application/json,text/html;q=0.9,*/*;q=0.8'};
+ const headers=typeof window==='undefined'?{'User-Agent':'KikifaitpipiChatillon/1.0 urban walking research','Accept':'application/json,text/html;q=0.9,*/*;q=0.8'}:{'Accept':'application/json,text/html;q=0.9,*/*;q=0.8'};
  const g=await fetch('https://geo.api.gouv.fr/communes/92020?fields=nom,population,contour&format=geojson&geometry=contour',{signal});if(!g.ok)throw new Error('Population indisponible : HTTP '+g.status);const commune=await g.json();
  const flat=commune.geometry.coordinates.flat(commune.geometry.type==='MultiPolygon'?2:1),lons=flat.map(p=>p[0]),lats=flat.map(p=>p[1]);const box=[Math.min(...lats),Math.min(...lons),Math.max(...lats),Math.max(...lons)].join(',');
  const query=`[out:json][timeout:25][maxsize:33554432];(way["highway"](${box});way["building"](${box});way["leisure"="park"](${box});way["landuse"="grass"](${box});nwr["landuse"="cemetery"](${box});nwr["amenity"="grave_yard"](${box});node["entrance"](${box}););(._;>;);out body;`;

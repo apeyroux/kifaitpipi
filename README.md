@@ -1,17 +1,17 @@
-![kifaitpipi — Comprendre les promenades, explorer les hypothèses](docs/readme-banner.svg)
+![kikifaitpipi — Comprendre les promenades, explorer les hypothèses](docs/readme-banner.svg)
 
 <p align="center">
-  <a href="https://kifaitpipi.rue.lasegue.fr"><strong>Explorer la simulation ↗</strong></a>
+  <a href="https://kikifaitpipi.rue.lasegue.fr"><strong>Explorer la simulation ↗</strong></a>
   · <a href="#la-démarche-scientifique">Méthode</a>
   · <a href="#sources-et-références">Sources</a>
   · <a href="#lancer-le-projet">Installation</a>
 </p>
 
-# kifaitpipi
+# kikifaitpipi
 
 **Une simulation statistique des promenades et des déjections canines à Châtillon, dans les Hauts-de-Seine.**
 
-Comment les logements, les rues et les horaires de sortie pourraient-ils répartir les promenades dans une ville ? kifaitpipi transforme des données ouvertes et des hypothèses explicites en parcours animés, en statistiques de passage et en cartes de chaleur exploratoires.
+Comment les logements, les rues et les horaires de sortie pourraient-ils répartir les promenades dans une ville ? kikifaitpipi transforme des données ouvertes et des hypothèses explicites en parcours animés, en statistiques de passage et en cartes de chaleur exploratoires.
 
 > [!IMPORTANT]
 > Les rues et les parcelles sont réelles ; les chiens, les trajets et les événements sont simulés. Le projet n’a pas été calibré par des observations locales : il permet d’explorer des scénarios, pas d’identifier des personnes, des responsables ou des nuisances avérées.
@@ -162,8 +162,8 @@ La méthodologie dans l’application et le fichier des sources recensent aussi 
 **Node.js 22.12+ ; Node 24 conseillé.**
 
 ```sh
-git clone https://github.com/apeyroux/kifaitpipi.git
-cd kifaitpipi
+git clone https://github.com/apeyroux/kikifaitpipi.git
+cd kikifaitpipi
 npm ci
 npm run dev
 ```
@@ -182,7 +182,7 @@ Ouvrir `http://localhost:5173`. Les données et les polices sont embarquées ; l
 
 ### Aperçu sans npm
 
-Ouvrir [kifaitpipi-autonome.html](kifaitpipi-autonome.html) dans un navigateur compatible avec `file://`. Cette page est un **instantané** : elle doit être régénérée après une modification. Si le navigateur bloque le fichier local, lancer `python3 scripts/preview.py` ; sur macOS, [Tester-la-page.command](Tester-la-page.command) fournit ce raccourci si Python 3 est installé. L’aperçu écoute uniquement sur `127.0.0.1`.
+Ouvrir [kikifaitpipi-autonome.html](kikifaitpipi-autonome.html) dans un navigateur compatible avec `file://`. Cette page est un **instantané** : elle doit être régénérée après une modification. Si le navigateur bloque le fichier local, lancer `python3 scripts/preview.py` ; sur macOS, [Tester-la-page.command](Tester-la-page.command) fournit ce raccourci si Python 3 est installé. L’aperçu écoute uniquement sur `127.0.0.1`.
 
 ### Actualiser et publier
 

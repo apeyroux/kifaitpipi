@@ -26,6 +26,6 @@ html = html.replace(/<script[^>]+src="[^"]+"[^>]*><\/script>/, () => `<script ty
 html = html.replace(/<link[^>]+href="[^"]+\.css"[^>]*>/, () => `<style>${css}</style>`);
 const favicon = await readFile(asset('/favicon.svg'));
 html = html.replace('/favicon.svg', `data:image/svg+xml;base64,${favicon.toString('base64')}`);
-const output = new URL('../kifaitpipi-autonome.html', import.meta.url);
+const output = new URL('../kikifaitpipi-autonome.html', import.meta.url);
 await writeFile(output, html);
 console.log(`Version autonome créée : ${output.pathname}`);

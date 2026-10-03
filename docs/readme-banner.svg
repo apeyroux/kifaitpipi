@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-labelledby="title desc">
-  <title id="title">kifaitpipi</title>
+  <title id="title">kikifaitpipi</title>
   <desc id="desc">Comprendre les promenades, explorer les hypothèses. Illustration abstraite de parcours lumineux.</desc>
   <defs>
     <linearGradient id="background" x2="1" y2="1"><stop stop-color="#09141f"/><stop offset="1" stop-color="#132635"/></linearGradient>
@@ -32,7 +32,7 @@
     <ellipse cx="35" cy="20" rx="5" ry="7" transform="rotate(35 35 20)"/>
   </g>
   <g font-family="system-ui, -apple-system, sans-serif">
-    <text x="105" y="89" fill="#edf4fc" font-size="44" font-weight="750" letter-spacing="-1.5">kifaitpipi</text>
+    <text x="105" y="89" fill="#edf4fc" font-size="44" font-weight="750" letter-spacing="-1.5">kikifaitpipi</text>
     <text x="54" y="148" fill="#edf4fc" font-size="27" font-weight="600">Comprendre les promenades,</text>
     <text x="54" y="183" fill="#76efd0" font-size="27" font-weight="600">explorer les hypothèses.</text>
     <text x="54" y="235" fill="#a6bdcf" font-size="15">Données ouvertes · Modèle reproductible · Châtillon, 92</text>
