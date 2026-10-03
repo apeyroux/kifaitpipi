@@ -23,3 +23,5 @@
 @media(max-width:620px){.heat-summary{left:18px;top:121px;right:18px;max-width:none;font-size:9px}.heat-summary strong{font-size:10px}.inspector{top:190px}}
 
 @media(max-width:620px){.empty-inspector{display:none}.daily-overlay .map-controls{bottom:125px}.daily-overlay .map-scale{bottom:91px}}
+
+.sidebar-foot{position:relative}.sidebar-foot h2{padding-right:40px}.github-link{position:absolute;top:9px;right:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#7d91ad;text-decoration:none}.github-link:hover{color:var(--mint);background:#76efd00a}

@@ -30,6 +30,8 @@ Comment les logements, les rues et les horaires de sortie pourraient-ils répart
 
 Les mictions/marquages sont représentés en jaune pastel et les défécations en marron pastel. Les halos restent lisibles à vitesse rapide ; leur persistance à l’écran ne modifie pas les événements comptés.
 
+La lecture démarre automatiquement après le chargement des données et le calcul du premier scénario. Le bouton pause reste disponible. Un lien GitHub discret dans le pied des réglages donne accès au code et à cette documentation.
+
 ## La démarche scientifique
 
 Le projet suit une démarche de **modélisation exploratoire** : préciser la question, documenter les données disponibles, rendre les hypothèses modifiables, vérifier les calculs et expliciter ce qu’il reste à confronter au terrain.
