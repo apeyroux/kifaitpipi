@@ -22,7 +22,7 @@
   },
   "behavior": {
     "status": "assumptions",
-    "walksPerDay": 3,
+    "walksPerDay": 2,
     "durationMinutes": 25,
     "weekdayPeaks": [
       7.5,
@@ -33,7 +33,7 @@
       15,
       45
     ],
-    "notes": "Simulated urinary events, including marking and elimination without distinguishing them; no measured door preference.",
+    "notes": "Simulated urinary events include marking and elimination without distinguishing them. Event counts and sampled pause durations are retained; normalized placement mixes uniform route locations with attraction near true physical junctions. No measured door preference, wall-corner or right-angle preference is assumed.",
     "urinationEventsPerMinute": 0.2,
     "reference": {
       "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7132425/",
@@ -60,7 +60,7 @@
       "defecationUse": "Historical short-observation rate, no longer linearly extrapolated to full-day defecation counts"
     },
     "veterinaryContext": "https://www.merckvetmanual.com/behavior/behavior-of-dogs/social-behavior-of-dogs",
-    "modelTransfer": "Urination observational mean extrapolated to walks with expected pause time accounted for; not a local calibration or clinical norm. Poisson arrivals and uniform individual factor 0.5 to 1.5 are unvalidated modeling assumptions. Illustrative pauses are not clinically measured urination durations.",
+    "modelTransfer": "Urination observational mean extrapolated to walks with expected pause time accounted for; not a local calibration or clinical norm. Poisson arrivals, uniform individual factor 0.5 to 1.5 and junction-placement coefficients are unvalidated modeling assumptions. Illustrative pauses are not clinically measured urination durations. Junction attraction qualitatively extrapolates observations of free-ranging males to companion dogs without known sex or territory.",
     "defecationPauseDurationSeconds": [
       30,
       90
@@ -90,6 +90,83 @@
         "institution": "UC Davis School of Veterinary Medicine",
         "url": "https://healthtopics.vetmed.ucdavis.edu/health-topics/canine/urine-marking-dogs",
         "use": "Distinguish social urine marking from bladder emptying; no urine volume inferred"
+      },
+      {
+        "authors": "Cafazzo, Natoli and Valsecchi",
+        "year": 2012,
+        "title": "Scent-Marking Behaviour in a Pack of Free-Ranging Domestic Dogs",
+        "url": "https://doi.org/10.1111/j.1439-0310.2012.02088.x",
+        "authorFullText": "https://www.researchgate.net/publication/263689219_Scent-Marking_Behaviour_in_a_Pack_of_Free-Ranging_Domestic_Dogs",
+        "study": {
+          "analysedDogs": 27,
+          "setting": "A free-ranging pack near Rome",
+          "period": "2005-2006",
+          "observationHours": 282.53,
+          "urinationsObserved": 782
+        },
+        "finding": "Raised-leg marking by 16 males concentrated at crossroads along territorial boundaries; ordinary eliminations did not show that concentration",
+        "reportedP": 0.003,
+        "use": "Qualitative motivation only; the reported p value is not used to derive a placement multiplier",
+        "limits": "Observational territorial context, not local companion-dog calibration or evidence specifically about 90-degree street corners or wall corners",
+        "verifiedAt": "2026-10-03"
+      },
+      {
+        "authors": "Lisberg and Snowdon",
+        "year": 2011,
+        "title": "Effects of sex, social status and gonadectomy on countermarking by domestic dogs, Canis familiaris",
+        "url": "https://doi.org/10.1016/j.anbehav.2011.01.006",
+        "use": "Documents overmarking and adjacent marking of conspecific urine; provides context, not an implemented inter-dog reaction or a fixed outdoor scent-persistence interval",
+        "verifiedAt": "2026-10-03"
+      },
+      {
+        "authors": "Bidder et al.",
+        "year": 2020,
+        "title": "Monitoring canid scent marking in space and time using a biologging and machine learning approach",
+        "url": "https://www.nature.com/articles/s41598-019-57198-w",
+        "openFullText": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6969016/",
+        "finding": "The introduction notes that scent-signal decay due to precipitation, ultraviolet radiation and bacterial decomposition has rarely been investigated empirically",
+        "use": "Motivates uncertainty about outdoor scent ageing; this biologging study does not establish an attraction-expiry interval for urban companion dogs",
+        "verifiedAt": "2026-10-03"
+      },
+      {
+        "authors": "Marc Bekoff",
+        "year": 2001,
+        "title": "Observations of scent-marking and discriminating self from others by a domestic dog (Canis familiaris): tales of displaced yellow snow",
+        "url": "https://doi.org/10.1016/S0376-6357(01)00142-5",
+        "authorPostprint": "https://www.wellbeingintlstudiesrepository.org/acwp_ena/46/",
+        "study": {
+          "dogs": 1,
+          "substrate": "Urine-saturated snow",
+          "revisitIntervalsSeconds": [
+            "<10",
+            "10–120",
+            "120–300"
+          ]
+        },
+        "finding": "Interest in other dogs urine remained approximately constant over the observed revisit intervals up to five minutes",
+        "limits": "Single-dog pilot experiment in snow; no long-term expiry threshold or validated transfer to urban outdoor substrates",
+        "verifiedAt": "2026-10-03"
+      },
+      {
+        "authors": "Walker et al.",
+        "year": 2024,
+        "title": "Male dingo urinary scents code for age class and wild dingoes respond to this information",
+        "url": "https://doi.org/10.1093/chemse/bjae004",
+        "openFullText": "https://academic.oup.com/chemse/article/doi/10.1093/chemse/bjae004/7601605",
+        "study": {
+          "species": "Dingo",
+          "firstVisitors": 34,
+          "environmentalExposureDays": [
+            0,
+            4,
+            33
+          ],
+          "conditions": "Urine on sand exposed without rainfall"
+        },
+        "finding": "Chemical composition changed with exposure; the measured duration of proximity and raised-tail response did not vary with exposure age",
+        "limits": "Does not identify an end-of-attraction threshold. The longest exposure is an experimental observation limit, not a scent-persistence value applicable to urban companion dogs",
+        "use": "Context for distinguishing changing chemistry from behavioural response; no coefficient or lifetime transferred to the simulation",
+        "verifiedAt": "2026-10-03"
       }
     ],
     "durationStatus": "25 min is an adjustable target scenario setting, not a measured urban or Chatillon mean; attained average reported separately",
@@ -132,19 +209,45 @@
         "url": "https://pubmed.ncbi.nlm.nih.gov/31753577/",
         "participants": 1058,
         "limits": "Japanese dense built environment associations, no local duration or elimination-rate calibration"
+      },
+      {
+        "authors": "Westgarth et al.",
+        "year": 2021,
+        "onlineYear": 2020,
+        "title": "Functional and recreational dog walking practices in the UK",
+        "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7954209/",
+        "participants": 38,
+        "use": "Qualitative distinction between functional and recreational walks motivates multiple outing intentions; no local frequencies or route coefficients transferred",
+        "verifiedAt": "2026-10-03"
+      },
+      {
+        "authors": "Kurose and Koike",
+        "year": 2020,
+        "title": "Detecting behavioural preferences of dog walkers in urban green spaces",
+        "url": "https://doi.org/10.18960/hozen.2002",
+        "use": "Owner-drawn habitual routes support considering accessible open green space destinations; no Japanese preference coefficient transferred to Châtillon",
+        "verifiedAt": "2026-10-03"
       }
     ],
-    "durationMinutesMeaning": "Target duration; achieved trip duration is distance / individual moving speed + sampled pauses",
+    "durationMinutesMeaning": "Target duration; achieved trip duration is sum of segment distance / segment moving speed plus urinary, fecal, sniffing and pedestrian-crossing pauses",
     "walkingSpeedMetersPerMinute": {
       "distribution": "uniform",
       "min": 50,
       "max": 80,
       "fixedPerDog": true,
-      "status": "unvalidated scenario assumption"
+      "status": "unvalidated scenario assumption",
+      "meaning": "The uniform 50–80 m/min base is fixed per dog. Actual segment speed varies gradually by street and slows approaching turns or crossings.",
+      "streetMultiplierRange": [
+        0.9,
+        1.04
+      ],
+      "turnApproachMeters": 6,
+      "turnThresholdDegrees": 35,
+      "actualSegmentSpeedVaries": true
     },
     "minimumMinutesBetweenWalks": 30,
     "scheduleNotes": "Minimum rest interval enforced between outings of each dog including the midnight boundary; modeling constraint, not a veterinary recommendation",
-    "routeSelection": "Closest target duration among up to six candidate connected loops; achieved mean duration and distance reported",
+    "routeSelection": "Plan a connected return-to-home outing with local, familiar or mapped-green-space intention, a reference-circuit repertoire capped at 2–4 per dog and populated as outings are planned, destination feasibility and a reserved return budget. Favor street continuity and limit unnecessary turns, crossings and repeated segments; allow out-and-back walks. All preference coefficients and routine counts are unvalidated scenario choices.",
     "defecationsPerDay": 2,
     "defecationReferences": [
       {
@@ -176,7 +279,128 @@
         ],
         "limits": "Adult Beagle dietary trials; selected diet means, not population limits or a public-walk calibration"
       }
-    ]
+    ],
+    "sniffing": {
+      "type": "sniff",
+      "stopsPerMovingMinuteRange": [
+        0.12,
+        0.24
+      ],
+      "pauseDurationSeconds": [
+        5,
+        25
+      ],
+      "placement": "Modest scenario preference for known green segments; never a shortcut off the accessible network",
+      "counting": "Extends trip duration and contributes to walking presence; excluded from all elimination counters, heat and persistent elimination markers",
+      "reference": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7132425/",
+      "status": "Observation supports including sniffing as a separate behaviour; rate, duration and placement coefficients are unvalidated simulation assumptions"
+    },
+    "crossingWaits": {
+      "type": "crossing",
+      "source": "OpenStreetMap crossing nodes and crossing-way metadata when present",
+      "waitProbability": {
+        "withoutKnownSignals": 0.55,
+        "withKnownSignals": 0.7
+      },
+      "pauseDurationSeconds": {
+        "withoutKnownSignals": [
+          2,
+          12
+        ],
+        "withKnownSignals": [
+          5,
+          45
+        ]
+      },
+      "counting": "Extends trip duration and contributes to walking presence; excluded from all elimination counters, heat and persistent elimination markers",
+      "status": "Unvalidated scenario assumptions; no live traffic or signal-state data and incomplete OSM crossing coverage"
+    },
+    "greenRoutePreference": {
+      "status": "unvalidated scenario assumptions, not local behavioural calibration",
+      "segmentCostMultiplier": 0.9,
+      "minimumCostFactor": 0.8,
+      "routeComparison": "Green segment share contributes to route score; physical distances remain unchanged",
+      "destinationSelection": "Network proximity and necessary detour within the moving-distance budget",
+      "intentHours": {
+        "fromInclusive": 6,
+        "toExclusive": 23
+      },
+      "individualAffinity": "Stable per-dog affinity changes the chance of choosing a green-space intention",
+      "accessLimit": "Known access, pedestrian and dog prohibitions are excluded. A mapped walkable network and absence of a known prohibition do not confirm current on-site or canine access. Destinations may have accessKnown=false.",
+      "greenFractionScoreBonus": 0.12,
+      "greenDestinationRoundTripScoreCoefficient": 0.8,
+      "greenAffinityRange": [
+        0.45,
+        0.75
+      ],
+      "feasibility": "Shortest mapped round trip to a green destination must fit estimated moving-distance budget times 1.12",
+      "maximumBudgetRatio": 1.12,
+      "greenIntentProbability": {
+        "weekdayMultiplier": 0.45,
+        "weekendMultiplier": 0.6,
+        "formula": "dayMultiplier * individualAffinity * proximityFactor * periodFactor, only with a feasible destination and 6 <= hour < 23",
+        "proximityFactor": "1 - 0.4 * clamp(nearestGreenRoundTrip / estimatedMovingDistanceBudget, 0, 1)",
+        "periodFactor": {
+          "before9orFrom19": 0.8,
+          "otherwise": 1
+        }
+      },
+      "nearbyGreenOnOtherIntents": "Local and familiar outings may consider a mapped nearby green waypoint when its shortest round trip is below 0.55 of the moving-distance budget, while keeping the complete outing within the return budget"
+    },
+    "referenceCircuits": {
+      "capacityRange": [
+        2,
+        4
+      ],
+      "initialization": "Populated lazily while planning outings; small networks can offer fewer distinct suitable circuits",
+      "status": "unvalidated scenario assumption"
+    },
+    "urinationPlacement": {
+      "status": "unvalidated spatial scenario assumption",
+      "uniformMixtureFraction": 0.5,
+      "junctionWeightedMixtureFraction": 0.5,
+      "junctionComponentWeight": 2,
+      "alongRouteJunctionRadiusMeters": 8,
+      "junctionDefinition": {
+        "minimumDistinctPhysicalBranches": 3,
+        "minimumAngularSeparationDegrees": 25,
+        "excludeFalseBranches": [
+          "simple turns",
+          "OSM geometry subdivisions",
+          "duplicate edges",
+          "projected residential anchors"
+        ]
+      },
+      "attractionExcludedOnCrossingSegments": true,
+      "normalization": "Normalized placement distribution retains the already sampled global Poisson event count and pause durations; no extra events or time are added",
+      "defecations": "Placement and counting unchanged",
+      "limitations": "No known individual sex, posture, territory or conspecific scent history; qualitative transfer from free-ranging territorial marking to companion dogs; not a local calibration"
+    },
+    "countermarking": {
+      "reference": "https://doi.org/10.1016/j.anbehav.2011.01.006",
+      "meaning": "Urination over or adjacent to another dog scent mark is documented",
+      "implemented": false,
+      "scentDecayImplemented": false,
+      "validatedFixedPersistenceInterval": null,
+      "modelInterpretation": "Current heat is cumulative event count, not detectable scent or an inter-dog countermarking model"
+    },
+    "scentPersistence": {
+      "status": "No validated fixed end-of-attraction threshold identified for outdoor companion-dog urine marks",
+      "validatedFixedAttractionExpirySeconds": null,
+      "scentDecayImplemented": false,
+      "environmentalFactors": [
+        "precipitation",
+        "ultraviolet radiation",
+        "bacterial decomposition"
+      ],
+      "interpretation": "Detectability, attraction and triggering a countermark are different outcomes; cumulative heat represents events, not residual odour strength or persistence",
+      "referenceUrls": [
+        "https://www.nature.com/articles/s41598-019-57198-w",
+        "https://doi.org/10.1016/S0376-6357(01)00142-5",
+        "https://doi.org/10.1093/chemse/bjae004"
+      ],
+      "numericTransfer": "No persistence duration, chemical decay coefficient or inter-dog attraction coefficient is transferred from these studies"
+    }
   },
   "excludedAreas": {
     "cemeteryWay": 27819672,
@@ -186,12 +410,20 @@
   "dailyHeat": {
     "cellMeters": 10,
     "kernelRadiusMeters": 30,
-    "aggregation": "Weighted elimination events in [00:00, selected time), periodically assigned to a 24 h day",
+    "aggregation": "Weighted urination and defecation events only in [00:00, selected time), periodically assigned to a 24 h day; sniffing and pedestrian-crossing stops excluded",
     "normalization": "Normalized compact kernel; color maximum fixed to complete-day maximum for selected scenario and event type, recalculated when either changes. Equal colors are not equal absolute quantities across scenarios.",
     "urbanism": "Residential surface times levels weights departures; accessible street network constrains routes. No clinically validated park, tree, facade or paving multiplier.",
     "meaning": "Theoretical event concentration, not measured contamination, urine volume, health risk, or abandoned feces",
     "enabledByDefault": true
   },
   "observationPrecision": "5 m is a geometric query radius on simulated sampled routes, not a guarantee of positional or statistical accuracy; OSM completeness and the weighted sample limit interpretation",
-  "reproducibility": "CSV exports scenario settings and seed. Exact reproduction also requires identical geographic data and simulator version."
+  "reproducibility": "CSV exports scenario settings and seed. Exact reproduction also requires identical geographic data and simulator version.",
+  "mappedGreenDestinations": {
+    "embeddedOsmCount": 10,
+    "accessKnownCount": 0,
+    "accessNotExplicitlyKnownCount": 10,
+    "dataSource": "public/data/chatillon.json",
+    "retrievedAt": "2026-10-02",
+    "meaning": "Destinations connected to the mapped walking network without a known prohibition; all 10 embedded destinations lack explicit access information. These are candidates, not confirmed dog-accessible parks."
+  }
 }

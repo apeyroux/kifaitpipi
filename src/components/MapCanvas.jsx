@@ -1,23 +1,30 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {Plus,Minus,LocateFixed} from 'lucide-react';
-import {nearest,distance,project,parcelAt} from '../geography.js';
+import {nearest,distance,project} from '../geography.js';
+import {parcelObservation,parcelPolygons} from '../observation.js';
 import {clock,tripState} from '../simulation.js';
 import {dailySegments,segmentUntil,heatIndex,valueUntil} from '../daily.js';
+import {playbackTime} from '../playback.js';
 function path(ctx,ps,toScreen,close=false){ctx.beginPath();ps.forEach((p,i)=>{const [x,y]=toScreen(p);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});if(close)ctx.closePath();}
-export default function MapCanvas({parcels,graph,sim,time,speed,layers,point,radius,onPoint,placing}){
- const ref=useRef(),outer=useRef(),cache=useRef(),historyCache=useRef(),heatCache=useRef(),drag=useRef();const [size,setSize]=useState([1000,800]),[view,setView]=useState({zoom:1,x:0,y:0});
+function parcelPath(ctx,parcel,toScreen){ctx.beginPath();for(const rings of parcelPolygons(parcel))for(const ring of rings){ring.forEach((p,i)=>{const q=toScreen(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.closePath();}}
+export default function MapCanvas({parcels,graph,sim,time,speed,playing=false,playbackClock,layers,point,radius,onPoint,placing}){
+ const ref=useRef(),outer=useRef(),cache=useRef(),historyCache=useRef(),heatCache=useRef(),drag=useRef(),draw=useRef(),animationClock=useRef();const [size,setSize]=useState([1000,800]),[view,setView]=useState({zoom:1,x:0,y:0}),[selectionHint,setSelectionHint]=useState('');
  const history=useMemo(()=>layers.history?dailySegments(sim.trips):[],[sim,layers.history]);
  const heat=useMemo(()=>layers.heat?heatIndex(sim.trips,layers.heatKind):null,[sim,layers.heat,layers.heatKind]);
- const xs=graph.nodes.map(n=>n.p[0]),ys=graph.nodes.map(n=>n.p[1]);const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);const scale=Math.min(size[0]/(maxx-minx+120),size[1]/(maxy-miny+120))*view.zoom;
+ const [minx,maxx,miny,maxy]=useMemo(()=>{let minx=Infinity,maxx=-Infinity,miny=Infinity,maxy=-Infinity;for(const {p} of graph.nodes){minx=Math.min(minx,p[0]);maxx=Math.max(maxx,p[0]);miny=Math.min(miny,p[1]);maxy=Math.max(maxy,p[1]);}return[minx,maxx,miny,maxy];},[graph]);const scale=Math.min(size[0]/(maxx-minx+120),size[1]/(maxy-miny+120))*view.zoom;
  const scaleMeters=[10,20,50,100,200,500,1000].find(m=>m*scale>=45)||1000;
  const toScreen=p=>[(p[0]-(minx+maxx)/2)*scale+size[0]/2+view.x,(p[1]-(miny+maxy)/2)*scale+size[1]/2+view.y];
  const toWorld=p=>[(p[0]-size[0]/2-view.x)/scale+(minx+maxx)/2,(p[1]-size[1]/2-view.y)/scale+(miny+maxy)/2];
  useEffect(()=>{const observer=new ResizeObserver(([entry])=>setSize([entry.contentRect.width,entry.contentRect.height]));observer.observe(outer.current);return()=>observer.disconnect();},[]);
+ // Use the parent's shared clock during playback; the local anchor supports
+ // independent previews. Pauses and seeks use the same exact time as controls.
+ useEffect(()=>{animationClock.current={time,speed,playing,at:performance.now()};},[time,speed,playing,sim]);
+ useEffect(()=>{const canvas=ref.current,dpr=window.devicePixelRatio||1;canvas.width=size[0]*dpr;canvas.height=size[1]*dpr;},[size]);
  useEffect(()=>{
   const dpr=window.devicePixelRatio||1,canvas=document.createElement('canvas');canvas.width=size[0]*dpr;canvas.height=size[1]*dpr;const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.fillStyle='#101b27';ctx.fillRect(0,0,...size);
   // Geographic layers are cached; only the walking overlay is repainted on time changes.
   for(const poly of graph.parks){path(ctx,poly,toScreen,true);ctx.fillStyle='#15362f';ctx.fill();ctx.strokeStyle='#20463c';ctx.lineWidth=1;ctx.stroke();}
-  if(layers.parcels)for(const parcel of parcels){ctx.beginPath();for(const ring of parcel.rings){ring.forEach((p,i)=>{const q=toScreen(p);i?ctx.lineTo(...q):ctx.moveTo(...q);});ctx.closePath();}ctx.fillStyle='#4552740b';ctx.fill('evenodd');ctx.strokeStyle='#54618088';ctx.lineWidth=.65;ctx.stroke();}
+  if(layers.parcels&&graph.mode==='real')for(const parcel of parcels){parcelPath(ctx,parcel,toScreen);ctx.fillStyle='#4552740b';ctx.fill('evenodd');ctx.strokeStyle='#54618088';ctx.lineWidth=.65;ctx.stroke();}
 
   if(graph.boundary){const polygons=graph.boundary.type==='MultiPolygon'?graph.boundary.coordinates:[graph.boundary.coordinates];ctx.setLineDash([4,5]);ctx.strokeStyle='#7bb6a75c';ctx.lineWidth=1;for(const polygon of polygons){path(ctx,polygon[0].map(project),toScreen,true);ctx.stroke();}ctx.setLineDash([]);}
   for(const b of graph.buildings){path(ctx,b.poly,toScreen,true);ctx.fillStyle=layers.housing&&b.weight>0?'#243447':'#1a2635';ctx.fill();ctx.strokeStyle='#2b3c4e';ctx.lineWidth=.5;ctx.stroke();}
@@ -30,7 +37,9 @@ export default function MapCanvas({parcels,graph,sim,time,speed,layers,point,rad
   cache.current=canvas;
  },[graph,parcels,size,view,layers.housing,layers.parcels]);
  useEffect(()=>{
-  const canvas=ref.current,dpr=window.devicePixelRatio||1;canvas.width=size[0]*dpr;canvas.height=size[1]*dpr;const ctx=canvas.getContext('2d');if(cache.current)ctx.drawImage(cache.current,0,0);ctx.scale(dpr,dpr);
+  const canvas=ref.current,dpr=window.devicePixelRatio||1,ctx=canvas.getContext('2d');
+  draw.current=displayTime=>{
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,canvas.width,canvas.height);if(cache.current)ctx.drawImage(cache.current,0,0);ctx.scale(dpr,dpr);
   const minute=Math.floor(time);
   if(layers.heat&&heat?.cells.length){
    let saved=heatCache.current;
@@ -58,11 +67,13 @@ export default function MapCanvas({parcels,graph,sim,time,speed,layers,point,rad
    }
    ctx.drawImage(saved.image,0,0,size[0],size[1]);
   }
-  if(layers.flows||layers.stops||layers.defecations)for(const trip of sim.trips){const state=time===1440?null:tripState(trip,time);ctx.globalAlpha=state?.alpha??1;
+  if(layers.flows||layers.stops||layers.defecations)for(const trip of sim.trips){const state=displayTime>=1440?null:tripState(trip,displayTime);ctx.globalAlpha=state?.alpha??1;
    if(layers.flows&&state){path(ctx,state.points,toScreen);ctx.strokeStyle=trip.color;ctx.lineJoin='round';ctx.lineCap='round';ctx.lineWidth=1.25;ctx.shadowBlur=8;ctx.shadowColor=trip.color;ctx.stroke();const p=toScreen(state.p);ctx.beginPath();ctx.arc(...p,2.5,0,Math.PI*2);ctx.fillStyle='#edfffa';ctx.shadowBlur=12;ctx.fill();}
+   if(layers.flows&&(state?.stop?.type==='sniff'||state?.stop?.type==='crossing')){const p=toScreen(state.p);ctx.shadowBlur=0;ctx.strokeStyle=state.stop.type==='crossing'?'#b1dfff99':'#bdebe188';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...p,5,0,Math.PI*2);ctx.stroke();}
    for(const stop of trip.stops){
+    if(stop.type&&stop.type!=='urination'&&stop.type!=='defecation')continue;
     const fecal=stop.type==='defecation';if(fecal?!layers.defecations:!layers.stops)continue;
-    if(time===1440)continue;const age=(time-trip.start-stop.at+1440)%1440,visibleMinutes=Math.max(stop.duration,speed*1.8/60);if(age>=visibleMinutes)continue;
+    if(displayTime>=1440)continue;const age=(displayTime-trip.start-stop.at+1440)%1440,visibleMinutes=Math.max(stop.duration,speed*1.8/60);if(age>=visibleMinutes)continue;
     const progress=age/visibleMinutes,p=toScreen(trip.points[stop.index]),pulse=.5+.5*Math.sin(progress*Math.PI*4);ctx.globalAlpha=Math.min(1,(1-progress)*3);
     const pastel=fecal?'#cda68f':'#e8f5a5',rim=fecal?'#e3c3ac':'#f3fac5';
     const glow=ctx.createRadialGradient(...p,2,...p,13+pulse*3);glow.addColorStop(0,pastel+'55');glow.addColorStop(.4,pastel+'22');glow.addColorStop(1,pastel+'00');ctx.shadowBlur=0;ctx.fillStyle=glow;ctx.beginPath();ctx.arc(...p,16,0,Math.PI*2);ctx.fill();ctx.strokeStyle=rim+'88';ctx.lineWidth=1;ctx.beginPath();ctx.arc(...p,6+pulse*1.5,0,Math.PI*2);ctx.stroke();ctx.fillStyle=pastel;ctx.shadowColor=pastel;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(...p,3.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=rim;ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p[0]-.8,p[1]-.8,1,0,Math.PI*2);ctx.fill();
@@ -71,8 +82,28 @@ export default function MapCanvas({parcels,graph,sim,time,speed,layers,point,rad
 
   }
   ctx.globalAlpha=1;ctx.shadowBlur=0;
-  if(point){const p=toScreen(point.p);ctx.beginPath();ctx.arc(...p,radius*scale,0,Math.PI*2);ctx.fillStyle='#78efd01a';ctx.fill();ctx.strokeStyle='#75e9cf66';ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(...p,10,0,Math.PI*2);ctx.strokeStyle='#9ef7e2';ctx.lineWidth=1.5;ctx.stroke();ctx.beginPath();ctx.arc(...p,4,0,Math.PI*2);ctx.fillStyle='#8ef1d8';ctx.shadowColor='#78eaca';ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;}
- },[graph,parcels,sim,time,speed,size,view,layers,point,radius,history,heat]);
- const choose=(x,y)=>{const p=toWorld([x,y]),n=graph.nodes[nearest(graph.nodes,p)];onPoint({p,name:graph.mode==='demo'?'Point exploratoire':n.name,parcel:parcelAt(parcels,p)});};
- return <div className={`map-canvas ${placing?'placing':''} ${layers.heat||layers.history?'daily-overlay':''}`} ref={outer}><canvas ref={ref} aria-label="Carte interactive des promenades. Cliquez pour analyser un point." tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'){choose(size[0]/2,size[1]/2);}}} onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY,v:view};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{if(!drag.current)return;const d=drag.current;if(!placing)setView({...view,x:d.v.x+e.clientX-d.x,y:d.v.y+e.clientY-d.y});}} onPointerUp={e=>{const d=drag.current;drag.current=null;if(!d)return;if(distance([e.clientX,e.clientY],[d.x,d.y])<5||placing){const box=e.currentTarget.getBoundingClientRect();choose(e.clientX-box.left,e.clientY-box.top);}}} onWheel={e=>setView(v=>({...v,zoom:Math.min(4,Math.max(.7,v.zoom*(e.deltaY<0?1.1:.9)))}))}/>{layers.heat&&heat?<div className="heat-summary" data-testid="heat-summary"><strong>{layers.heatKind==='urination'?'Mictions / marquages':layers.heatKind==='defecation'?'Défécations':'Toutes les déjections'} · cumul théorique</strong><span>00:00 → {clock(Math.floor(time))} · {Math.round(valueUntil(heat.events,Math.floor(time))).toLocaleString('fr-FR')} événements pondérés</span></div>:null}<div className="map-controls"><button aria-label="Zoom avant" onClick={()=>setView(v=>({...v,zoom:Math.min(4,v.zoom*1.2)}))}><Plus size={18}/></button><button aria-label="Zoom arrière" onClick={()=>setView(v=>({...v,zoom:Math.max(.7,v.zoom/1.2)}))}><Minus size={18}/></button><button aria-label="Recentrer la carte" onClick={()=>setView({zoom:1,x:0,y:0})}><LocateFixed size={18}/></button></div><div className="map-scale"><span style={{width:scaleMeters*scale}}>{scaleMeters} m</span></div></div>;
+  if(point?.parcel){
+   ctx.save();parcelPath(ctx,point.parcel,toScreen);ctx.lineJoin='round';ctx.lineCap='round';
+   if(radius>0){ctx.strokeStyle='#ff790020';ctx.lineWidth=radius*scale*2;ctx.stroke();}
+   ctx.fillStyle='#ff790034';ctx.fill('evenodd');ctx.strokeStyle='#ff7900';ctx.lineWidth=2.5;ctx.shadowColor='#ff7900';ctx.shadowBlur=12;ctx.stroke();ctx.shadowBlur=0;ctx.strokeStyle='#ffc17d';ctx.lineWidth=.8;ctx.stroke();ctx.restore();
+  }else if(point){const p=toScreen(point.p);ctx.beginPath();ctx.arc(...p,radius*scale,0,Math.PI*2);ctx.fillStyle='#78efd01a';ctx.fill();ctx.strokeStyle='#75e9cf66';ctx.setLineDash([3,4]);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(...p,10,0,Math.PI*2);ctx.strokeStyle='#9ef7e2';ctx.lineWidth=1.5;ctx.stroke();ctx.beginPath();ctx.arc(...p,4,0,Math.PI*2);ctx.fillStyle='#8ef1d8';ctx.shadowColor='#78eaca';ctx.shadowBlur=14;ctx.fill();ctx.shadowBlur=0;}
+  };
+  draw.current(playbackTime(playbackClock?.current??animationClock.current,performance.now()));
+ },[graph,parcels,sim,time,speed,playing,size,view,layers,point,radius,history,heat]);
+ useEffect(()=>{
+  if(!playing)return;
+  let frame;
+  const paint=now=>{const anchor=playbackClock?.current??animationClock.current;if(!anchor?.playing)return;draw.current?.(playbackTime(anchor,now));frame=requestAnimationFrame(paint);};
+  frame=requestAnimationFrame(paint);return()=>cancelAnimationFrame(frame);
+ },[playing,sim,playbackClock]);
+ const choose=(x,y)=>{
+  const p=toWorld([x,y]);
+  if(graph.mode==='real'){
+   const observation=parcelObservation(parcels,p);
+   if(!observation){setSelectionHint(parcels.length?'Aucune parcelle à cet endroit. Cliquez à l’intérieur d’une parcelle.':'Cadastre indisponible : la sélection de parcelles nécessite les données cadastrales.');return;}
+   setSelectionHint('');onPoint(observation);return;
+  }
+  setSelectionHint('');const n=graph.nodes[nearest(graph.nodes,p)];onPoint({p,name:n?.name||'Point exploratoire'});
+ };
+ return <div className={`map-canvas ${placing?'placing':''} ${layers.heat||layers.history?'daily-overlay':''}`} ref={outer}><canvas ref={ref} data-selected-parcel={point?.parcel?.id||undefined} aria-label={graph.mode==='real'?"Carte interactive des promenades. Cliquez dans une parcelle pour analyser ses abords.":"Carte illustrative des promenades. Cliquez pour analyser un point."} tabIndex={0} onKeyDown={e=>{if(e.key==='Enter'){choose(size[0]/2,size[1]/2);}}} onPointerDown={e=>{drag.current={x:e.clientX,y:e.clientY,v:view};e.currentTarget.setPointerCapture(e.pointerId);}} onPointerCancel={()=>{drag.current=null;}} onPointerMove={e=>{if(!drag.current)return;const d=drag.current;if(!placing)setView({...view,x:d.v.x+e.clientX-d.x,y:d.v.y+e.clientY-d.y});}} onPointerUp={e=>{const d=drag.current;drag.current=null;if(!d)return;if(distance([e.clientX,e.clientY],[d.x,d.y])<5||placing){const box=e.currentTarget.getBoundingClientRect();choose(e.clientX-box.left,e.clientY-box.top);}}} onWheel={e=>setView(v=>({...v,zoom:Math.min(4,Math.max(.7,v.zoom*(e.deltaY<0?1.1:.9)))}))}/>{selectionHint?<div className="selection-hint" role="status">{selectionHint}</div>:null}{layers.heat&&heat?<div className="heat-summary" data-testid="heat-summary"><strong>{layers.heatKind==='urination'?'Mictions / marquages':layers.heatKind==='defecation'?'Défécations':'Toutes les déjections'} · cumul théorique</strong><span>00:00 → {clock(Math.floor(time))} · {Math.round(valueUntil(heat.events,Math.floor(time))).toLocaleString('fr-FR')} événements pondérés</span></div>:null}<div className="map-controls"><button aria-label="Zoom avant" onClick={()=>setView(v=>({...v,zoom:Math.min(4,v.zoom*1.2)}))}><Plus size={18}/></button><button aria-label="Zoom arrière" onClick={()=>setView(v=>({...v,zoom:Math.max(.7,v.zoom/1.2)}))}><Minus size={18}/></button><button aria-label="Recentrer la carte" onClick={()=>setView({zoom:1,x:0,y:0})}><LocateFixed size={18}/></button></div><div className="map-scale"><span style={{width:scaleMeters*scale}}>{scaleMeters} m</span></div></div>;
 }

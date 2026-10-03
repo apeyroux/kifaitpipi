@@ -19,7 +19,7 @@ test('trail survives the whole walk, pauses at the entrance, then fades',()=>{
 });
 test('zero ownership and zero elimination rates produce zero corresponding events',()=>{
  const empty=simulate(graph,{...settings,ownership:0});assert.equal(empty.dogs,0);assert.equal(empty.trips.length,0);
- const noStops=simulate(graph,{...settings,urinationRate:0,defecationsPerDay:0});assert.ok(noStops.trips.every(t=>t.stops.length===0));
+ const noEliminations=simulate(graph,{...settings,urinationRate:0,defecationsPerDay:0});assert.ok(noEliminations.trips.every(t=>t.stops.every(s=>s.type==='sniff'||s.type==='crossing')));
 });
 test('temporal profiles are normalized, with a delayed weekend morning',()=>{
  for(const day of ['weekday','weekend'])assert.ok(Math.abs(profile(day).reduce((a,b)=>a+b,0)-1)<1e-10);

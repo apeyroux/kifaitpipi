@@ -33,7 +33,7 @@ export function valueUntil(series,time){
 export function heatIndex(trips,kind='urination'){
  const cellSize=10,radius=30,cells=new Map(),events=[];
  for(const trip of trips)for(const stop of trip.stops){
-  const type=stop.type||'urination';if(kind!=='all'&&kind!==type)continue;
+  const type=stop.type||'urination';if(type!=='urination'&&type!=='defecation')continue;if(kind!=='all'&&kind!==type)continue;
   const p=trip.points[stop.index],time=((trip.start+stop.at)%DAY+DAY)%DAY,weight=trip.weight;events.push({time,weight});
   // A normalized compact kernel preserves the weighted number of events.
   const candidates=[];let sum=0;

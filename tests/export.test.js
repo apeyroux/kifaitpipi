@@ -25,3 +25,10 @@ test('CSV quotes source text and prevents spreadsheet names from becoming formul
  const negative=scenarioCsv({...scenario,point:{name:'Position',p:[-1000000,0]}});
  assert.ok(negative.includes(';-11.353'));
 });
+
+test('parcel CSV identifies the complete cadastral zone and margin instead of a point radius',()=>{
+ const csv=scenarioCsv({...scenario,radius:5,point:{p:[0,0],name:'Parcelle AB 0001',parcel:{id:'92020000AB0001',label:'AB 0001'}}});
+ const [header,line]=csv.slice(1).split('\r\n'),headers=header.split(';'),row=Object.fromEntries(line.split(';').map((v,i)=>[headers[i],v]));
+ assert.equal(row.mode_observation,'parcelle');assert.equal(row.parcelle_id,'92020000AB0001');assert.equal(row.parcelle_reference,'AB 0001');
+ assert.equal(row.marge_parcelle_m,'5');assert.equal(row.rayon_m,'');assert.equal(row.parcours_echantillon_zone,'2');assert.equal(row.parcours_echantillon_dans_rayon,'');
+});

@@ -8,8 +8,10 @@ test('moving time follows walking distance at the assigned speed, including afte
  for(const trip of sim.trips){
   assert.ok(trip.walkingSpeed>=50&&trip.walkingSpeed<=80);
   const pauses=new Map(trip.stops.map(s=>[s.index,s.duration]));let meters=0;
-  for(let i=1;i<trip.points.length;i++){const d=distance(trip.points[i-1],trip.points[i]);meters+=d;const moving=trip.times[i]-trip.times[i-1]-(pauses.get(i-1)||0);assert.ok(Math.abs(moving-d/trip.walkingSpeed)<1e-8);}
-  assert.ok(Math.abs(trip.duration-(meters/trip.walkingSpeed+trip.stops.reduce((n,s)=>n+s.duration,0)))<1e-8);
+  let movingTotal=0;
+  for(let i=1;i<trip.points.length;i++){const d=distance(trip.points[i-1],trip.points[i]);meters+=d;const moving=trip.times[i]-trip.times[i-1]-(pauses.get(i-1)||0);assert.ok(trip.speeds[i]>0);assert.ok(Math.abs(moving-d/trip.speeds[i])<1e-8);movingTotal+=moving;}
+  assert.ok(Math.abs(meters-trip.meters)<1e-8);
+  assert.ok(Math.abs(trip.duration-(movingTotal+trip.stops.reduce((n,s)=>n+s.duration,0)))<1e-8);
  }
 });
 test('scheduling separates a dog\'s outings across the midnight boundary',()=>{
