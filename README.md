@@ -190,7 +190,14 @@ Les récupérations de données nécessitent Internet (`geo.api.gouv.fr`, les se
 
 En l’absence de données géographiques utilisables, un mode de démonstration signale explicitement son fond schématique. Le cadastre affiche des limites et des références, sans propriétaires ni occupants.
 
-La publication est décrite dans [DEPLOY-CLOUDFLARE.md](DEPLOY-CLOUDFLARE.md). Un contributeur qui héberge sa propre copie doit adapter le compte et le nom du projet dans le script. La connexion ou le jeton Wrangler reste sur le poste de publication, hors du dépôt.
+Pour publier sur Cloudflare Pages, se connecter une première fois à Wrangler, puis lancer le script :
+
+```sh
+npx wrangler@4.146.0 login --scopes account:read user:read pages:write
+npm run deploy:cloudflare
+```
+
+Un contributeur qui héberge sa propre copie doit adapter le compte et le nom du projet dans le script. La connexion ou le jeton Wrangler reste sur le poste de publication, hors du dépôt.
 
 ## Repères dans le code
 
