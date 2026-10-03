@@ -2,7 +2,7 @@ import {distance} from './geography.js';
 
 // Route choices are made for a whole outing. The coefficients below describe
 // an exploratory scenario, rather than measured behaviour in Châtillon.
-const MAX_TREES=40, RETURN_DETOUR=1.5, BUDGET_TOLERANCE=.12;
+const MAX_TREES=40, BUDGET_TOLERANCE=.12;
 const graphCaches=new WeakMap();
 const edgeKey=(a,b)=>a<b?`${a}:${b}`:`${b}:${a}`;
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
@@ -87,7 +87,7 @@ function usedEdges(path){const used=new Set();for(let i=1;i<path.length;i++)used
 // A bounded search favours continuity and comfortable streets. The tree gives
 // an exact metric lower bound when the destination is home. A feasible metric
 // path remains available if the preference search exhausts its distance budget.
-function findPath(cache,start,goal,{used=new Set(),previous=-1,maxMeters=Infinity,homeDistances}={}){
+function findPath(cache,start,goal,{used=new Set(),previous=-1,continueFromPrevious=false,maxMeters=Infinity,homeDistances}={}){
  if(start===goal)return [start];
  const n=cache.adj.length,costs=new Float64Array(n).fill(Infinity),meters=new Float64Array(n).fill(Infinity),parents=new Int32Array(n).fill(-1),heap=new Heap();
  const lower=u=>homeDistances?homeDistances[u]:distance(cache.graph.nodes[u].p,cache.graph.nodes[goal].p);
@@ -100,6 +100,7 @@ function findPath(cache,start,goal,{used=new Set(),previous=-1,maxMeters=Infinit
   const [estimate,u]=heap.pop();if(estimate>costs[u]+heuristic(u)+1e-7)continue;
   if(u===goal)return fromTree(parents,start,goal);
   for(const edge of cache.adj[u]){
+   if(continueFromPrevious&&u===start&&edge.to===previous)continue;
    const walked=meters[u]+edge.len;if(walked+lower(edge.to)>maxMeters+1e-7)continue;
    const prior=u===start?previous:parents[u];
    const cost=costs[u]+edge.len*edge.factor+edge.crossingCost+turnCost(cache,prior,u,edge)+(used.has(edgeKey(u,edge.to))?edge.len*.35:0);
@@ -109,23 +110,47 @@ function findPath(cache,start,goal,{used=new Set(),previous=-1,maxMeters=Infinit
  return null;
 }
 
+// Residential anchors and OSM subdivisions are points to pass through, not
+// destinations. Keep junctions, dead ends and substantial bends as route goals.
+function routeEndpoint(cache,node){
+ const edges=cache.adj[node];if(edges.length!==2)return true;
+ const p=cache.graph.nodes[node].p,a=cache.graph.nodes[edges[0].to].p,b=cache.graph.nodes[edges[1].to].p;
+ const ux=a[0]-p[0],uy=a[1]-p[1],vx=b[0]-p[0],vy=b[1]-p[1],length=Math.hypot(ux,uy)*Math.hypot(vx,vy);
+ return length>0&&(ux*vx+uy*vy)/length>-Math.cos(35*Math.PI/180);
+}
+
 function normalGoals(cache,trees,home,target,heading){
- const origin=cache.graph.nodes[home].p,bins=Array(4).fill(null);let fallback=null;
+ const origin=cache.graph.nodes[home].p,bins=Array(4).fill(null);let fallback=null,endpointFallback=null;
  for(let node=0;node<cache.adj.length;node++){
   const d=trees.metric.distances[node],back=trees.returnMetric.distances[node];if(node===home||!Number.isFinite(d+back)||d<=0)continue;
   const delta=Math.abs(d+back-target)/target;
   if(!fallback||delta<fallback.score)fallback={node,score:delta};
+  if(!routeEndpoint(cache,node))continue;
+  if(d+back<=target*(1+BUDGET_TOLERANCE)&&(!endpointFallback||delta<endpointFallback.score))endpointFallback={node,score:delta};
   if(d+back>target*(1+BUDGET_TOLERANCE)||d<target*.18)continue;
   const p=cache.graph.nodes[node].p,angle=(Math.atan2(p[1]-origin[1],p[0]-origin[0])-heading+Math.PI*4)%(Math.PI*2),bin=Math.floor(angle/(Math.PI/2));
   const centralAngle=(bin+.5)*Math.PI/2,score=delta+Math.abs(angle-centralAngle)*.035;
   if(!bins[bin]||score<bins[bin].score)bins[bin]={node,score};
  }
  const goals=bins.filter(Boolean).sort((a,b)=>a.score-b.score).map(g=>({node:g.node}));
- if(!goals.length&&fallback)goals.push({node:fallback.node});return goals;
+ if(!goals.length&&(endpointFallback||fallback))goals.push({node:(endpointFallback||fallback).node});return goals;
+}
+
+// Remove a retraced branch from a circuit unless it reaches an actual dead end
+// or a requested green destination. A pure out-and-back remains available when
+// the network or the distance budget offers no circuit.
+function trimExcursions(cache,path,waypoints){
+ const destinations=new Set(waypoints.filter(p=>p.type==='green').map(p=>p.node)),clean=[];
+ for(const node of path){
+  const turn=clean.at(-1);
+  if(clean.length>1&&clean.at(-2)===node&&cache.adj[turn].length>1&&!destinations.has(turn))clean.pop();
+  else clean.push(node);
+ }
+ return clean.length>1?clean:path;
 }
 
 function describe(cache,path,home,outwardMeters,shortestReturnMeters,waypoints,target,intent){
- const counts=new Map();let meters=0,overlapMeters=0,turns=0,majorMeters=0,greenMeters=0,preferenceCost=0;
+ const counts=new Map(),destinations=new Set(waypoints.filter(p=>p.type==='green').map(p=>p.node));let meters=0,overlapMeters=0,turns=0,majorMeters=0,greenMeters=0,preferenceCost=0,unmotivatedReversals=0;
  for(let i=1;i<path.length;i++){
   const edge=cache.lookup[path[i-1]].get(path[i]),key=edgeKey(path[i-1],path[i]);meters+=edge.len;
   if(counts.has(key))overlapMeters+=edge.len;counts.set(key,(counts.get(key)||0)+1);
@@ -133,10 +158,11 @@ function describe(cache,path,home,outwardMeters,shortestReturnMeters,waypoints,t
   preferenceCost+=edge.len*edge.factor+edge.crossingCost+turn;
   if(edge.green)greenMeters+=edge.len;
   if(['primary','primary_link','secondary','secondary_link'].includes(edge.highway))majorMeters+=edge.len;
+  if(i<path.length-1&&path[i-1]===path[i+1]&&cache.adj[path[i]].length>1&&!destinations.has(path[i]))unmotivatedReversals++;
  }
  const returnMeters=meters-outwardMeters;
  const repeatedFraction=meters?overlapMeters/meters:0;
- return {path,meters,home,waypoints,waypoint:waypoints.find(p=>p.type==='green')??waypoints.at(-1),outwardMeters,returnMeters,shortestReturnMeters,returnDetour:shortestReturnMeters>0?returnMeters/shortestReturnMeters:1,overlapMeters,repeatedFraction,overlap:repeatedFraction,turns,majorMeters,greenMeters,greenFraction:meters?greenMeters/meters:0,preferenceCost,intent,targetMeters:target,budgetLimited:Math.abs(meters-target)>target*.25};
+ return {path,meters,home,waypoints,waypoint:waypoints.find(p=>p.type==='green')??waypoints.at(-1),outwardMeters,returnMeters,shortestReturnMeters,returnDetour:shortestReturnMeters>0?returnMeters/shortestReturnMeters:1,overlapMeters,repeatedFraction,overlap:repeatedFraction,turns,unmotivatedReversals,majorMeters,greenMeters,greenFraction:meters?greenMeters/meters:0,preferenceCost,intent,targetMeters:target,budgetLimited:Math.abs(meters-target)>target*.25};
 }
 
 function candidate(cache,trees,home,target,goals,intent){
@@ -148,19 +174,31 @@ function candidate(cache,trees,home,target,goals,intent){
    const metric=fromTree(trees.metric.parents,home,goal),preferred=fromTree(trees.preferred.parents,home,goal);
    leg=preferred&&trees.preferred.distances[goal]<=trees.metric.distances[goal]*1.15+1e-7&&trees.preferred.distances[goal]<=budget+1e-7?preferred:metric;
   }else leg=findPath(cache,start,goal,{previous:outward.at(-2)??-1,used:usedEdges(outward),maxMeters:budget});
-  if(!leg)return null;
+  if(!leg||leg.slice(1).includes(home))return null;
   outward.push(...leg.slice(1));outwardMeters+=lengthOf(cache,leg);
  }
  const end=outward.at(-1),shortest=trees.returnMetric.distances[end],remaining=target*(1+BUDGET_TOLERANCE)-outwardMeters;
  if(remaining<shortest-1e-7)return null;
- const back=findPath(cache,end,home,{used:usedEdges(outward),previous:outward.at(-2)??-1,maxMeters:Math.min(remaining,shortest*RETURN_DETOUR),homeDistances:trees.returnMetric.distances})??fromTree(trees.returnMetric.parents,home,end)?.reverse();
+ // A circuit may have an asymmetric return from this arbitrary waypoint.
+ // Constrain the entire outing's distance, and first try continuing forward.
+ const backOptions={used:usedEdges(outward),previous:outward.at(-2)??-1,maxMeters:remaining,homeDistances:trees.returnMetric.distances};
+ const back=findPath(cache,end,home,{...backOptions,continueFromPrevious:true})??findPath(cache,end,home,backOptions)??fromTree(trees.returnMetric.parents,home,end)?.reverse();
  if(!back)return null;
- return describe(cache,[...outward,...back.slice(1)],home,outwardMeters,shortest,goals,target,intent);
+ const raw=[...outward,...back.slice(1)],path=trimExcursions(cache,raw,goals);
+ if(path.slice(1,-1).includes(home))return null;
+ if(path.length===raw.length)return describe(cache,path,home,outwardMeters,shortest,goals,target,intent);
+ // Trimming can remove a synthetic waypoint. Describe the remaining circuit
+ // with a real visited point, and recompute its outward/return distances.
+ const lengths=[0];for(let i=1;i<path.length;i++)lengths.push(lengths.at(-1)+cache.lookup[path[i-1]].get(path[i]).len);
+ const greens=goals.filter(g=>g.type==='green'),lastGreen=greens.reduce((last,g)=>Math.max(last,path.indexOf(g.node)),1);
+ let split=lastGreen;for(let i=lastGreen+1;i<path.length-1;i++)if(Math.abs(lengths[i]-lengths.at(-1)/2)<Math.abs(lengths[split]-lengths.at(-1)/2))split=i;
+ const waypoints=[...greens,{node:path[split]}];
+ return describe(cache,path,home,lengths[split],trees.returnMetric.distances[path[split]],waypoints,target,intent);
 }
 
 function routeScore(result,target,intent){
  const fit=Math.abs(result.meters-target)/target;
- return fit*4+result.repeatedFraction*(intent==='local'?.12:.45)+(result.preferenceCost/result.meters-1)*.6-result.greenFraction*.12+(intent==='green'?(result.greenRoundTrip??0)/target*.8:0);
+ return fit*4+result.unmotivatedReversals*2+result.repeatedFraction*(intent==='local'?.12:.45)+(result.preferenceCost/result.meters-1)*.6-result.greenFraction*.12+(intent==='green'?(result.greenRoundTrip??0)/target*.8:0);
 }
 
 export function chooseRoute(graph,home,targetMeters,random,options={}){
